@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "go": "node app.js"
+    "go": "node app.js",
+    "go1": "npm install mysql2 express nodemailer && npm run go"
   },
   "keywords": [],
   "author": "",
@@ -12,11 +13,14 @@
   "description": "",
   "dependencies": {
     "express": "^4.21.1",
+    "go": "^3.0.1",
     "mariadb": "^3.4.0",
     "mysql": "^2.18.1",
     "mysql2": "^3.11.4",
     "nodemailer": "^6.9.16",
     "nodemon": "^3.1.7",
+    "npm": "^10.9.0",
+    "run": "^1.5.0",
     "yarn": "^1.22.22"
   }
 }
