@@ -71,13 +71,13 @@ app.post('/otp', async (req, res) => {
     } else {
         console.log(insertId[0][0]['password']);
         if (insertId[0][0]['password'] == password) {
-            console.log("logged in");
+            console.log("logged in")
             let ifLogged = 'true'
-            res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`);
+            res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`)
         } else {
-            console.log("not logged in");
-            let ifLogged = 'false';
-            res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`);
+            console.log("not logged in")
+            let ifLogged = 'false'
+            res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`)
         }
 
 
