@@ -76,6 +76,8 @@ app.post('/otp', async (req, res) => {
             res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`);
         } else {
             console.log("not logged in");
+            let ifLogged = 'false';
+            res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`);
         }
 
 
