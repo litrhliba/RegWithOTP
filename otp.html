@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1>OTP VER</h1>
+<form action='/ver' method="POST">
+    <input type="text" name="email" id="email" >
+    <input type="text" name="code" id="code" >
+    <input type="submit" value="Submit">
+    <button id="nocode">No code.</button>
+
+</form>
+</body>
+<script>
+    function getQueryParam(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+    let nocodeButton = document.getElementById('nocode');
+    nocodeButton.addEventListener('click',(e)=>{
+        e.preventDefault();
+        window.location.href = "/nocode";
+    })
+    const email = getQueryParam('email');
+    const emailForm = document.getElementById('email');
+    emailForm.value = email;
+</script>
+</html>

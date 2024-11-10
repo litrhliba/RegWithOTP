@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <p id="message">Hello <span id="email">Error</span>. You are logged in!  </p>
+</body>
+<script>
+    function getQueryParam(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+    let ifLogged = getQueryParam('ifLogged');
+    let message = document.getElementById('message');
+    const email = getQueryParam('email');
+    const emailSpan = document.getElementById('email');
+    let text;
+    if(ifLogged=='true'){
+         text = `Hello ${email}. You are logged in.`;
+    }else{
+         text=`Ooops, wrong password.`;
+    }
+
+    message.innerHTML = text;
+</script>
+</html>
