@@ -3,11 +3,16 @@ const express = require('express')
 const mariadb = require('mariadb');
 const mysql = require('mysql2');
 const path = require('path');
+const session = require('express-session')
 const {sendCode, genCode} = require('./code.js')
 // const pool = require('./con.js')
 let dataCode = {}
 let passwords = {}
 const app = express()
+app.use(session({
+    secret:'shhhh'
+
+}))
 app.use(express.urlencoded());
 app.use(express.static(path.join(__dirname)));
 // Parse JSON bodies (as sent by API clients)
@@ -59,65 +64,72 @@ app.post('/otp', async (req, res) => {
         return res.status(400).send("CAPTCHA token is missing.");
     }
 
-    try {
-        // Verify the token with Google's API
-        const response = await axios.post(
-            `https://www.google.com/recaptcha/api/siteverify`,
-            {},
-            {
-                params: {
-                    secret: RECAPTCHA_SECRET_KEY,
-                    response: token,
-                },
-            }
-        );
 
-        const data = response.data;
-
-        if (data.success) {
-            // CAPTCHA passed successfully
-
-            const insertId = await connection.promise().query(
-                `SELECT * FROM user WHERE username = '${email}'`
-            );
-            console.log(insertId[0][0]);
-            if (insertId[0][0] == undefined) {
-                console.log('sending code!')
-                let code = genCode();
-                sendCode(email, code)
-
-                dataCode[email] = code;
-                passwords[email] = password;
-                console.log('em', email, 'c', code, data);
-                const options = {
-                    root: path.join(__dirname)
-                };
-
-                res.redirect(`/otp.html?email=${email}`);
-            } else {
-                console.log(insertId[0][0]['password']);
-                if (insertId[0][0]['password'] == password) {
-                    console.log("logged in")
-                    let ifLogged = 'true'
-                    res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`)
-                } else {
-                    console.log("not logged in")
-                    let ifLogged = 'false'
-                    res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`)
-                }
-
-
-            }
-        } else {
-            // CAPTCHA failed
-            res.send("CAPTCHA verification failed. Please try again.");
+    // Verify the token with Google's API
+    const response = await axios.post(
+        `https://www.google.com/recaptcha/api/siteverify`,
+        {},
+        {
+            params: {
+                secret: RECAPTCHA_SECRET_KEY,
+                response: token,
+            },
         }
-    } catch (error) {
-        console.error("Error verifying reCAPTCHA:", error);
-        res.status(500).send("Server error. Please try again later.");
+    );
+
+    const data = response.data;
+
+    if (data.success) {
+        // CAPTCHA passed successfully
+
+        const insertId = await connection.promise().query(
+            `SELECT * FROM user WHERE username = '${email}'`
+        );
+        console.log(insertId[0][0]);
+        if (insertId[0][0] == undefined) {
+            console.log('sending code!')
+            let code = genCode();
+            sendCode(email, code)
+
+            dataCode[email] = code;
+            passwords[email] = password;
+            console.log('em', email, 'c', code, data);
+            const options = {
+                root: path.join(__dirname)
+            };
+
+            res.redirect(`/otp.html?email=${email}`);
+        } else {
+            console.log(insertId[0][0]['password']);
+            if (insertId[0][0]['password'] == password) {
+                console.log("logged in")
+                req.session.username = email
+
+                let ifLogged = 'true'
+                res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`)
+            } else {
+                console.log("not logged in")
+                let ifLogged = 'false'
+                res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`)
+            }
+
+
+        }
+    } else {
+        // CAPTCHA failed
+        res.send("CAPTCHA verification failed. Please try again.");
     }
 
+    // catch (error) {
+    //     console.error("Error verifying reCAPTCHA:", error);
+    //     res.status(500).send("Server error. Please try again later.");
+    // }
 
+
+})
+app.get('/session', async (req, res) => {
+    console.log(req.session)
+    res.send(`Hello broski ${req.session.username}`);
 })
 app.get('nocode', (req, res) => {
     let email = req.body.username;
