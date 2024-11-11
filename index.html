@@ -3,15 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <!-- Your code -->
+
 </head>
 <body>
 <h1>Login/Register</h1>
-<form action='/otp' method="POST">
-    <input type="text" name="username" id="username" >
+<form action='/otp' method="POST" id="contact">
+    <input type="text" name="username" id="username">
     <input type="password" name="password" id="password">
-    <input type="submit" value="Submit">
-    
-    
+
+    <div class="g-recaptcha" data-sitekey="6Lf8M3sqAAAAABZ1S4p3-8MOPOxlR9uhBY7piH8R"></div>
+    <input type="submit" value="submit">
+<!--    <input type="submit" value="Submit" >-->
+
+
+<!--    <button class="g-recaptcha"-->
+<!--            data-sitekey="6LcFyHoqAAAAAPHLqp-cPtpYNiIN2zDZYhyXGA9K"-->
+<!--            data-callback='onSubmit'-->
+<!--            data-action='login' type="submit">-->
+<!--        Submit-->
+<!--    </button>-->
+
+
 </form>
 </body>
+<!-- Replace the variables below. -->
+
+
 </html>

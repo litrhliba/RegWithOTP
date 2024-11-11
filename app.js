@@ -1,17 +1,19 @@
+const axios = require('axios');
 const express = require('express')
 const mariadb = require('mariadb');
 const mysql = require('mysql2');
 const path = require('path');
 const {sendCode, genCode} = require('./code.js')
 // const pool = require('./con.js')
-let data = {}
+let dataCode = {}
 let passwords = {}
 const app = express()
 app.use(express.urlencoded());
 app.use(express.static(path.join(__dirname)));
 // Parse JSON bodies (as sent by API clients)
 app.use(express.json());
-const port = 3000
+const port = 3001
+const RECAPTCHA_SECRET_KEY = "6Lf8M3sqAAAAAKDd1088P7M2aNlU9AG-__H9eAsZ"
 const connection = mysql.createConnection({
     host: 'sql7.freemysqlhosting.net',
     user: 'sql7743821',
@@ -51,37 +53,70 @@ app.get('/', (req, res) => {
 app.post('/otp', async (req, res) => {
     let email = req.body.username;
     let password = req.body.password;
-    const insertId = await connection.promise().query(
-        `SELECT * FROM user WHERE username = '${email}'`
-    );
-    console.log(insertId[0][0]);
-    if (insertId[0][0] == undefined) {
-        console.log('sending code!')
-        let code = genCode();
-        sendCode(email, code)
+    const token = req.body["g-recaptcha-response"];
 
-        data[email] = code;
-        passwords[email] = password;
-        console.log('em', email, 'c', code, data);
-        const options = {
-            root: path.join(__dirname)
-        };
-
-        res.redirect(`/otp.html?email=${email}`);
-    } else {
-        console.log(insertId[0][0]['password']);
-        if (insertId[0][0]['password'] == password) {
-            console.log("logged in")
-            let ifLogged = 'true'
-            res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`)
-        } else {
-            console.log("not logged in")
-            let ifLogged = 'false'
-            res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`)
-        }
-
-
+    if (!token) {
+        return res.status(400).send("CAPTCHA token is missing.");
     }
+
+    try {
+        // Verify the token with Google's API
+        const response = await axios.post(
+            `https://www.google.com/recaptcha/api/siteverify`,
+            {},
+            {
+                params: {
+                    secret: RECAPTCHA_SECRET_KEY,
+                    response: token,
+                },
+            }
+        );
+
+        const data = response.data;
+
+        if (data.success) {
+            // CAPTCHA passed successfully
+
+            const insertId = await connection.promise().query(
+                `SELECT * FROM user WHERE username = '${email}'`
+            );
+            console.log(insertId[0][0]);
+            if (insertId[0][0] == undefined) {
+                console.log('sending code!')
+                let code = genCode();
+                sendCode(email, code)
+
+                dataCode[email] = code;
+                passwords[email] = password;
+                console.log('em', email, 'c', code, data);
+                const options = {
+                    root: path.join(__dirname)
+                };
+
+                res.redirect(`/otp.html?email=${email}`);
+            } else {
+                console.log(insertId[0][0]['password']);
+                if (insertId[0][0]['password'] == password) {
+                    console.log("logged in")
+                    let ifLogged = 'true'
+                    res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`)
+                } else {
+                    console.log("not logged in")
+                    let ifLogged = 'false'
+                    res.redirect(`/loggedin.html?email=${email}&ifLogged=${ifLogged}`)
+                }
+
+
+            }
+        } else {
+            // CAPTCHA failed
+            res.send("CAPTCHA verification failed. Please try again.");
+        }
+    } catch (error) {
+        console.error("Error verifying reCAPTCHA:", error);
+        res.status(500).send("Server error. Please try again later.");
+    }
+
 
 })
 app.get('nocode', (req, res) => {
@@ -89,7 +124,7 @@ app.get('nocode', (req, res) => {
     let code = genCode();
     sendCode(email, code)
 
-    data[email] = code;
+    dataCode[email] = code;
     console.log('em', email, 'c', code, data);
     const options = {
         root: path.join(__dirname)
@@ -100,8 +135,9 @@ app.post('/ver', async (req, res) => {
     let email = req.body.email;
     let code = req.body.code;
     let password = passwords[email];
-    if (data[email] == code) {
-        delete data[email];
+    console.log(dataCode[email])
+    if (dataCode[email] == code) {
+        delete dataCode[email];
         console.log(`INSERT INTO user( username, password) VALUES ('${email}',"${password}")`)
 
         const insertId = await connection.promise().query(
@@ -141,6 +177,43 @@ app.get('/auth/register', (req, res) => {
 
     res.send(200)
 })
+app.post('/new', async (req, res) => {
+    const token = req.body["g-recaptcha-response"];
+
+    if (!token) {
+        return res.status(400).send("CAPTCHA token is missing.");
+    }
+
+    try {
+        // Verify the token with Google's API
+        const response = await axios.post(
+            `https://www.google.com/recaptcha/api/siteverify`,
+            {},
+            {
+                params: {
+                    secret: RECAPTCHA_SECRET_KEY,
+                    response: token,
+                },
+            }
+        );
+
+        const data = response.data;
+
+        if (data.success) {
+            // CAPTCHA passed successfully
+
+            res.redirect('/otp')
+        } else {
+            // CAPTCHA failed
+            res.send("CAPTCHA verification failed. Please try again.");
+        }
+    } catch (error) {
+        console.error("Error verifying reCAPTCHA:", error);
+        res.status(500).send("Server error. Please try again later.");
+    }
+});
+
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
+
